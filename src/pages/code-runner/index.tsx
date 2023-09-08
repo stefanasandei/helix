@@ -16,11 +16,11 @@ import EditorSettings, {
 import AppShell from "~/components/ui/AppShell";
 import { Button } from "~/components/ui/Button";
 import { LoadingSpinner } from "~/components/ui/Loading";
-// import {
-//   Popover,
-//   PopoverContent,
-//   PopoverTrigger,
-// } from "~/components/ui/Popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/Popover";
 import {
   Select,
   SelectTrigger,
@@ -38,6 +38,7 @@ import {
   supportedLanguages,
 } from "~/utils/code";
 import { registerThemes, type Theme } from "~/utils/monaco-themes";
+import { AiOutlineFileAdd } from "react-icons/ai";
 
 // yes this should be broken into multiple components
 const CodeRunnerPage: NextPage = () => {
@@ -162,7 +163,7 @@ const CodeRunnerPage: NextPage = () => {
             </svg>
           </p>
         </button>
-        {/* <Popover>
+        <Popover>
           <PopoverTrigger asChild>
             <button>
               <p
@@ -170,38 +171,14 @@ const CodeRunnerPage: NextPage = () => {
                       ${"bg-secondary-700 text-accent-400 hover:rounded-xl hover:bg-accent-500 hover:text-primary-400"}
                       group rounded-3xl transition-all duration-200`}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="h-6 w-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3"
-                  />
-                </svg>
+                <AiOutlineFileAdd className="h-6 w-6" />
               </p>
             </button>
           </PopoverTrigger>
           <PopoverContent className="mx-6 flex w-60 flex-row justify-between bg-secondary-700 p-2">
-            <Button
-              variant={isLeftSide ? "accent" : "outline"}
-              onClick={() => setIsLeftSide(true)}
-            >
-              left sidebar
-            </Button>
-            <Button
-              variant={isLeftSide ? "outline" : "accent"}
-              onClick={() => setIsLeftSide(false)}
-            >
-              right sidebar
-            </Button>
+            {/* todo add file: keep in local storage */}
           </PopoverContent>
-        </Popover> */}
+        </Popover>
         <Select
           defaultValue={lang}
           onValueChange={(newValue: SetStateAction<string>) => {
@@ -253,15 +230,7 @@ const CodeRunnerPage: NextPage = () => {
           </p>
         </div>
       ) : (
-        session.status == "authenticated" && (
-          <Button
-            className="my-2"
-            variant={"outline"}
-            onClick={() => alert("work in progress!")}
-          >
-            Copy file link
-          </Button>
-        )
+        session.status == "authenticated" && <div>todo: add file tree</div>
       )}
     </div>
   );
