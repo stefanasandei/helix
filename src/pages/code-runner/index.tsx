@@ -15,11 +15,11 @@ import EditorSettings, {
 import AppShell from "~/components/ui/AppShell";
 import { Button } from "~/components/ui/Button";
 import { LoadingSpinner } from "~/components/ui/Loading";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/Popover";
+// import {
+//   Popover,
+//   PopoverContent,
+//   PopoverTrigger,
+// } from "~/components/ui/Popover";
 import {
   Select,
   SelectTrigger,
@@ -30,7 +30,11 @@ import {
 import { Textarea } from "~/components/ui/Textarea";
 import { api } from "~/utils/api";
 import { cn } from "~/utils/cn";
-import { getLanguage, supportedLanguages } from "~/utils/code";
+import {
+  addHaskellSyntax,
+  getLanguage,
+  supportedLanguages,
+} from "~/utils/code";
 import { registerThemes, type Theme } from "~/utils/monaco-themes";
 
 // yes this should be broken into multiple components
@@ -51,7 +55,7 @@ const CodeRunnerPage: NextPage = () => {
     undefined
   );
 
-  const [isLeftSide, setIsLeftSide] = useState(true);
+  const [isLeftSide] = useState(true);
   const [currentTab, setCurrentTab] = useState<"output" | "input">("output");
   const [input, setInput] = useState("");
 
@@ -61,203 +65,7 @@ const CodeRunnerPage: NextPage = () => {
   useEffect(() => {
     if (!monaco) return;
 
-    monaco.languages.register({ id: "haskell" });
-    monaco.languages.setMonarchTokensProvider("haskell", {
-      tokenizer: {
-        root: [
-          [/[A-Z][\w$]*/, "type.identifier"],
-          [
-            /[a-zA-Z_$][\w$]*/,
-            {
-              cases: {
-                "@keywords": { token: "keyword.$0" },
-                "@default": "identifier",
-              },
-            },
-          ],
-          { include: "@whitespace" },
-          [/[{}()\[\]]/, "@brackets"],
-          [/[<>](?!@symbols)/, "@brackets"],
-          [
-            /@symbols/,
-            {
-              cases: {
-                "@operators": "delimiter",
-                "@default": "",
-              },
-            },
-          ],
-          [/@\s*[a-zA-Z_\$][\w\$]*/, "annotation"],
-          [/(@digits)[eE]([\-+]?(@digits))?[fFdD]?/, "number.float"],
-          [/(@digits)\.(@digits)([eE][\-+]?(@digits))?[fFdD]?/, "number.float"],
-          [/0[xX](@hexdigits)[Ll]?/, "number.hex"],
-          [/0(@octaldigits)[Ll]?/, "number.octal"],
-          [/0[bB](@binarydigits)[Ll]?/, "number.binary"],
-          [/(@digits)[fFdD]/, "number.float"],
-          [/(@digits)[lL]?/, "number"],
-          [/[;,.]/, "delimiter"],
-          [/"([^"\\]|\\.)*$/, "string.invalid"],
-          [/"""/, "string", "@multistring"],
-          [/"/, "string", "@string"],
-          [/'[^\\']'/, "string"],
-          [/'/, "string.invalid"],
-        ],
-        whitespace: [
-          [/[ \t\r\n]+/, ""],
-          [/\/\*\*(?!\/)/, "comment.doc", "@javadoc"],
-          [/\/\*/, "comment", "@comment"],
-          [/\/\/.*$/, "comment"],
-        ],
-        comment: [
-          [/[^\/*]+/, "comment"],
-          [/\/\*/, "comment", "@comment"],
-          [/\*\//, "comment", "@pop"],
-          [/[\/*]/, "comment"],
-        ],
-        javadoc: [
-          [/[^\/*]+/, "comment.doc"],
-          [/\/\*/, "comment.doc", "@push"],
-          [/\/\*/, "comment.doc.invalid"],
-          [/\*\//, "comment.doc", "@pop"],
-          [/[\/*]/, "comment.doc"],
-        ],
-        string: [
-          [/[^\\"\n]+/, "string"],
-          [/@escapes/, "string.escape"],
-          [/\\./, "string.escape.invalid"],
-          [/"/, "string", "@pop"],
-        ],
-        multistring: [
-          [/[^\\"\n]+/, "string"],
-          [/@escapes/, "string.escape"],
-          [/\\./, "string.escape.invalid"],
-          [/"""/, "string", "@pop"],
-          [/./, "string"],
-        ],
-      },
-      keywords: [
-        "as",
-        "as?",
-        "break",
-        "class",
-        "continue",
-        "do",
-        "else",
-        "false",
-        "for",
-        "fun",
-        "if",
-        "in",
-        "!in",
-        "interface",
-        "is",
-        "!is",
-        "null",
-        "object",
-        "package",
-        "return",
-        "super",
-        "this",
-        "throw",
-        "true",
-        "try",
-        "typealias",
-        "val",
-        "var",
-        "when",
-        "while",
-        "by",
-        "catch",
-        "constructor",
-        "delegate",
-        "dynamic",
-        "field",
-        "file",
-        "finally",
-        "get",
-        "import",
-        "init",
-        "param",
-        "property",
-        "receiver",
-        "set",
-        "setparam",
-        "where",
-        "actual",
-        "abstract",
-        "annotation",
-        "companion",
-        "const",
-        "crossinline",
-        "data",
-        "enum",
-        "expect",
-        "external",
-        "final",
-        "infix",
-        "inline",
-        "inner",
-        "internal",
-        "lateinit",
-        "noinline",
-        "open",
-        "operator",
-        "out",
-        "override",
-        "private",
-        "protected",
-        "public",
-        "reified",
-        "sealed",
-        "suspend",
-        "tailrec",
-        "vararg",
-        "field",
-        "it",
-      ],
-      operators: [
-        "+",
-        "-",
-        "*",
-        "/",
-        "%",
-        "=",
-        "+=",
-        "-=",
-        "*=",
-        "/=",
-        "%=",
-        "++",
-        "--",
-        "&&",
-        "||",
-        "!",
-        "==",
-        "!=",
-        "===",
-        "!==",
-        ">",
-        "<",
-        "<=",
-        ">=",
-        "[",
-        "]",
-        "!!",
-        "?",
-        "->",
-        "@",
-        ";",
-        "$",
-        "_",
-      ],
-      symbols: /[=><!~?:&|+\-*\/\^%]+/,
-      escapes:
-        /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
-      digits: /\d+(_+\d+)*/,
-      octaldigits: /[0-7]+(_+[0-7]+)*/,
-      binarydigits: /[0-1]+(_+[0-1]+)*/,
-      hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
-    });
+    addHaskellSyntax(monaco);
 
     registerThemes(monaco);
 
@@ -347,7 +155,7 @@ const CodeRunnerPage: NextPage = () => {
             </svg>
           </p>
         </button>
-        <Popover>
+        {/* <Popover>
           <PopoverTrigger asChild>
             <button>
               <p
@@ -386,7 +194,7 @@ const CodeRunnerPage: NextPage = () => {
               right sidebar
             </Button>
           </PopoverContent>
-        </Popover>
+        </Popover> */}
         <Select
           defaultValue={lang}
           onValueChange={(newValue: SetStateAction<string>) => {
@@ -439,7 +247,7 @@ const CodeRunnerPage: NextPage = () => {
 
   const editor = (
     <PanelGroup direction="vertical">
-      <Panel className="m-0" defaultSize={80} maxSize={90}>
+      <Panel className="m-0" defaultSize={70} maxSize={90}>
         <div className="flex w-full flex-row items-center justify-between">
           <div className="flex flex-row">
             <div className="m-1 flex flex-row items-center justify-between gap-1 rounded-md bg-accent-500 px-2 py-1">
@@ -499,10 +307,10 @@ const CodeRunnerPage: NextPage = () => {
       </Panel>
       <PanelResizeHandle className="h-1 bg-secondary-800 focus:bg-secondary-600" />
       <Panel
-        defaultSize={20}
+        defaultSize={30}
         minSize={10}
         maxSize={30}
-        className="flex h-full flex-col"
+        className="flex h-full flex-col "
       >
         <div className="h-full overflow-y-auto whitespace-pre bg-secondary-800 p-2 font-mono text-sm">
           {currentTab == "output" ? (
@@ -524,18 +332,18 @@ const CodeRunnerPage: NextPage = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Write your input data here!"
-                className="border-none ring-0"
+                className="h-full border-none ring-2 ring-secondary-700"
               ></Textarea>
             </div>
           )}
         </div>
-        <div className="flex max-h-10 w-full flex-row gap-5 bg-secondary-700 transition-all">
+        <div className="flex w-full flex-row gap-5 rounded-lg bg-secondary-700 p-1 transition-all">
           <button
             className={cn(
-              "rounded-sm border-2 p-1 transition-all hover:bg-secondary-600",
+              "rounded-lg border-2 p-2 transition-all",
               currentTab == "output"
-                ? "border-secondary-600"
-                : "border-secondary-700"
+                ? "border-black bg-black text-accent-400"
+                : "border-secondary-700 hover:bg-secondary-600"
             )}
             onClick={() => setCurrentTab("output")}
           >
@@ -543,10 +351,10 @@ const CodeRunnerPage: NextPage = () => {
           </button>
           <button
             className={cn(
-              "rounded-sm border-2 p-1 transition-all hover:bg-secondary-600",
-              currentTab == "input"
-                ? "border-secondary-600"
-                : "border-secondary-700"
+              "rounded-lg border-2 p-2 transition-all",
+              currentTab != "output"
+                ? "border-black bg-black text-accent-400"
+                : "border-secondary-700 hover:bg-secondary-600"
             )}
             onClick={() => setCurrentTab("input")}
           >
