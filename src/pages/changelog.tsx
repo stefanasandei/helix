@@ -13,7 +13,7 @@ const ChangeLog: NextPage = () => {
           </h1>
         </div>
         {/* TODO(@Stefan)
-            text-accent-400 doesn't work here so I used text-pink-400,
+            text-accent-400 doesn't really work here so I used text-pink-400,
             see what's wrong at a more reasonable hour please, I am coding this
             at 11:43 PM 9/7/2023 atm since once I get into the flow I can't stop.
             Thanks. - Mihai
