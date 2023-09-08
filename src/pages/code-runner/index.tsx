@@ -205,9 +205,23 @@ const CodeRunnerPage: NextPage = () => {
         <Select
           defaultValue={lang}
           onValueChange={(newValue: SetStateAction<string>) => {
-            setLang(newValue.toString());
-            setCode(getLanguage(newValue.toString()).defaultCode);
-            setOutput("");
+            if (_isCoding) {
+              if (
+                confirm(
+                  "You have unsaved changes. Do you want to switch the language?"
+                )
+              ) {
+                setLang(newValue.toString());
+                setCode(getLanguage(newValue.toString()).defaultCode);
+                setOutput("");
+                setIsCoding(false);
+              }
+            } else {
+              setLang(newValue.toString());
+              setCode(getLanguage(newValue.toString()).defaultCode);
+              setOutput("");
+              setIsCoding(false);
+            }
           }}
         >
           <SelectTrigger className="max-w-[180px]">
