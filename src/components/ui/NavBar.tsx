@@ -1,4 +1,6 @@
+import { useAtom } from "jotai";
 import { useRouter } from "next/router";
+import { isCodingAtom } from "~/utils/atoms";
 
 export const pages = [
   {
@@ -122,6 +124,8 @@ const NavBar = () => {
   const router = useRouter();
   const pathname = router.pathname;
 
+  const [isCoding, setIsCoding] = useAtom(isCodingAtom);
+
   return (
     <nav
       className="fixed bottom-0 z-50 m-0 flex h-16 w-screen flex-row
@@ -132,7 +136,20 @@ const NavBar = () => {
         <button
           className="mx-auto ml-2"
           key={page.name}
-          onClick={async () => await router.push(page.link[0] as string)}
+          onClick={async () => {
+            let weMovin = true;
+            if (isCoding) {
+              const isGood = confirm(
+                "You have unsaved code changes. Do you want to leave the page?"
+              );
+              if (isGood) {
+                weMovin = true;
+                setIsCoding(false);
+              } else weMovin = false;
+            }
+
+            if (weMovin) await router.push(page.link[0] as string);
+          }}
         >
           <div
             className={`relative my-2 flex h-12 w-12 items-center justify-center 

@@ -1,12 +1,14 @@
 import { LoadingSpinner } from "~/components/ui/Loading";
 import { Editor as MonacoEditor, useMonaco } from "@monaco-editor/react";
 import { useEffect, useState } from "react";
-import { getLanguage } from "~/utils/code";
+import { addHaskellSyntax, getLanguage } from "~/utils/code";
 import {
   type EditorSettingsProps,
   getDefaultEditorSettings,
 } from "./EditorSettings";
 import { registerThemes } from "~/utils/monaco-themes";
+import { isCodingAtom } from "~/utils/atoms";
+import { useAtom } from "jotai";
 
 export type CodeEditorSettings = {
   lang: string;
@@ -34,207 +36,13 @@ const CodeEditor = ({
     undefined
   );
 
+  const [isCoding, setIsCoding] = useAtom(isCodingAtom);
+
   const monaco = useMonaco();
   useEffect(() => {
     if (!monaco) return;
 
-    monaco.languages.register({ id: "haskell" });
-    monaco.languages.setMonarchTokensProvider("haskell", {
-      tokenizer: {
-        root: [
-          [/[A-Z][\w$]*/, "type.identifier"],
-          [
-            /[a-zA-Z_$][\w$]*/,
-            {
-              cases: {
-                "@keywords": { token: "keyword.$0" },
-                "@default": "identifier",
-              },
-            },
-          ],
-          { include: "@whitespace" },
-          [/[{}()\[\]]/, "@brackets"],
-          [/[<>](?!@symbols)/, "@brackets"],
-          [
-            /@symbols/,
-            {
-              cases: {
-                "@operators": "delimiter",
-                "@default": "",
-              },
-            },
-          ],
-          [/@\s*[a-zA-Z_\$][\w\$]*/, "annotation"],
-          [/(@digits)[eE]([\-+]?(@digits))?[fFdD]?/, "number.float"],
-          [/(@digits)\.(@digits)([eE][\-+]?(@digits))?[fFdD]?/, "number.float"],
-          [/0[xX](@hexdigits)[Ll]?/, "number.hex"],
-          [/0(@octaldigits)[Ll]?/, "number.octal"],
-          [/0[bB](@binarydigits)[Ll]?/, "number.binary"],
-          [/(@digits)[fFdD]/, "number.float"],
-          [/(@digits)[lL]?/, "number"],
-          [/[;,.]/, "delimiter"],
-          [/"([^"\\]|\\.)*$/, "string.invalid"],
-          [/"""/, "string", "@multistring"],
-          [/"/, "string", "@string"],
-          [/'[^\\']'/, "string"],
-          [/'/, "string.invalid"],
-        ],
-        whitespace: [
-          [/[ \t\r\n]+/, ""],
-          [/\/\*\*(?!\/)/, "comment.doc", "@javadoc"],
-          [/\/\*/, "comment", "@comment"],
-          [/\/\/.*$/, "comment"],
-        ],
-        comment: [
-          [/[^\/*]+/, "comment"],
-          [/\/\*/, "comment", "@comment"],
-          [/\*\//, "comment", "@pop"],
-          [/[\/*]/, "comment"],
-        ],
-        javadoc: [
-          [/[^\/*]+/, "comment.doc"],
-          [/\/\*/, "comment.doc", "@push"],
-          [/\/\*/, "comment.doc.invalid"],
-          [/\*\//, "comment.doc", "@pop"],
-          [/[\/*]/, "comment.doc"],
-        ],
-        string: [
-          [/[^\\"\n]+/, "string"],
-          [/@escapes/, "string.escape"],
-          [/\\./, "string.escape.invalid"],
-          [/"/, "string", "@pop"],
-        ],
-        multistring: [
-          [/[^\\"\n]+/, "string"],
-          [/@escapes/, "string.escape"],
-          [/\\./, "string.escape.invalid"],
-          [/"""/, "string", "@pop"],
-          [/./, "string"],
-        ],
-      },
-      keywords: [
-        "as",
-        "as?",
-        "break",
-        "class",
-        "continue",
-        "do",
-        "else",
-        "false",
-        "for",
-        "fun",
-        "if",
-        "in",
-        "!in",
-        "interface",
-        "is",
-        "!is",
-        "null",
-        "object",
-        "package",
-        "return",
-        "super",
-        "this",
-        "throw",
-        "true",
-        "try",
-        "typealias",
-        "val",
-        "var",
-        "when",
-        "while",
-        "by",
-        "catch",
-        "constructor",
-        "delegate",
-        "dynamic",
-        "field",
-        "file",
-        "finally",
-        "get",
-        "import",
-        "init",
-        "param",
-        "property",
-        "receiver",
-        "set",
-        "setparam",
-        "where",
-        "actual",
-        "abstract",
-        "annotation",
-        "companion",
-        "const",
-        "crossinline",
-        "data",
-        "enum",
-        "expect",
-        "external",
-        "final",
-        "infix",
-        "inline",
-        "inner",
-        "internal",
-        "lateinit",
-        "noinline",
-        "open",
-        "operator",
-        "out",
-        "override",
-        "private",
-        "protected",
-        "public",
-        "reified",
-        "sealed",
-        "suspend",
-        "tailrec",
-        "vararg",
-        "field",
-        "it",
-      ],
-      operators: [
-        "+",
-        "-",
-        "*",
-        "/",
-        "%",
-        "=",
-        "+=",
-        "-=",
-        "*=",
-        "/=",
-        "%=",
-        "++",
-        "--",
-        "&&",
-        "||",
-        "!",
-        "==",
-        "!=",
-        "===",
-        "!==",
-        ">",
-        "<",
-        "<=",
-        ">=",
-        "[",
-        "]",
-        "!!",
-        "?",
-        "->",
-        "@",
-        ";",
-        "$",
-        "_",
-      ],
-      symbols: /[=><!~?:&|+\-*\/\^%]+/,
-      escapes:
-        /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
-      digits: /\d+(_+\d+)*/,
-      octaldigits: /[0-7]+(_+[0-7]+)*/,
-      binarydigits: /[0-1]+(_+[0-1]+)*/,
-      hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
-    });
+    addHaskellSyntax(monaco);
 
     registerThemes(monaco);
 
@@ -285,6 +93,7 @@ const CodeEditor = ({
         onChange={(value, _) => {
           setCode(value as string);
           onCodeChange(value as string);
+          setIsCoding(true);
         }}
         onMount={() => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -296,6 +105,8 @@ const CodeEditor = ({
                 "https://unpkg.com/monaco-vim@0.4.0/dist/monaco-vim.js",
             },
           });
+
+          setIsCoding(false);
         }}
       />
     </div>

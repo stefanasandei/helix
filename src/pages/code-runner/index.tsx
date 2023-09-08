@@ -2,6 +2,7 @@
 // @ts-ignore
 /* eslint no-use-before-define: 0 */
 import { Editor, useMonaco } from "@monaco-editor/react";
+import { useAtom } from "jotai";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
@@ -29,6 +30,7 @@ import {
 } from "~/components/ui/Select";
 import { Textarea } from "~/components/ui/Textarea";
 import { api } from "~/utils/api";
+import { isCodingAtom } from "~/utils/atoms";
 import { cn } from "~/utils/cn";
 import {
   addHaskellSyntax,
@@ -54,6 +56,8 @@ const CodeRunnerPage: NextPage = () => {
   const [vim, setVim] = useState<{ dispose: () => void } | undefined>(
     undefined
   );
+
+  const [_isCoding, setIsCoding] = useAtom(isCodingAtom);
 
   const [isLeftSide] = useState(true);
   const [currentTab, setCurrentTab] = useState<"output" | "input">("output");
@@ -111,6 +115,7 @@ const CodeRunnerPage: NextPage = () => {
 
   const handleEditorChange = (value: string | undefined, _: unknown) => {
     setCode(value as string);
+    setIsCoding(true);
   };
 
   const handleEditorMount = (_editor: unknown, _monaco: unknown) => {
@@ -122,6 +127,8 @@ const CodeRunnerPage: NextPage = () => {
         "monaco-vim": "https://unpkg.com/monaco-vim@0.4.0/dist/monaco-vim.js",
       },
     });
+
+    setIsCoding(false);
   };
 
   const run = () => {

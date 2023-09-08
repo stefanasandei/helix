@@ -35,3 +35,5 @@ export const yourTestsAtom = atom<string[]>([]);
 export const yourTestsResultsAtom = atom<{ input: string; output: string }[]>(
   []
 );
+
+export const isCodingAtom = atom<boolean>(false);
