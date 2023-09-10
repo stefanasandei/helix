@@ -14,13 +14,7 @@ import EditorSettings, {
   getDefaultEditorSettings,
 } from "~/components/functional/EditorSettings";
 import AppShell from "~/components/ui/AppShell";
-import { Button } from "~/components/ui/Button";
 import { LoadingSpinner } from "~/components/ui/Loading";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/Popover";
 import {
   Select,
   SelectTrigger,
@@ -30,9 +24,10 @@ import {
 } from "~/components/ui/Select";
 import { Textarea } from "~/components/ui/Textarea";
 import { api } from "~/utils/api";
-import { isCodingAtom } from "~/utils/atoms";
+import { fileTreeAtom, isCodingAtom } from "~/utils/atoms";
 import { cn } from "~/utils/cn";
 import {
+  type CodeRunnerFile,
   addHaskellSyntax,
   getLanguage,
   supportedLanguages,
@@ -59,6 +54,7 @@ const CodeRunnerPage: NextPage = () => {
   );
 
   const [_isCoding, setIsCoding] = useAtom(isCodingAtom);
+  const [fileTree, setFileTree] = useAtom(fileTreeAtom);
 
   const [isLeftSide] = useState(true);
   const [currentTab, setCurrentTab] = useState<"output" | "input">("output");
@@ -70,6 +66,7 @@ const CodeRunnerPage: NextPage = () => {
   useEffect(() => {
     if (!monaco) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     addHaskellSyntax(monaco);
 
     registerThemes(monaco);
@@ -117,6 +114,15 @@ const CodeRunnerPage: NextPage = () => {
   const handleEditorChange = (value: string | undefined, _: unknown) => {
     setCode(value as string);
     setIsCoding(true);
+
+    setFileTree(
+      fileTree.map((file) => {
+        // todo: lang vs language vs extension
+        if (file.name == "main" && file.language == lang)
+          file.contents = value as string;
+        return file;
+      })
+    );
   };
 
   const handleEditorMount = (_editor: unknown, _monaco: unknown) => {
@@ -129,7 +135,17 @@ const CodeRunnerPage: NextPage = () => {
       },
     });
 
-    setIsCoding(false);
+    if (fileTree.length == 0) {
+      // todo...
+      setIsCoding(false);
+      setFileTree([
+        {
+          contents: code,
+          language: lang,
+          name: "main",
+        },
+      ]);
+    } else setIsCoding(true);
   };
 
   const run = () => {
@@ -163,25 +179,52 @@ const CodeRunnerPage: NextPage = () => {
             </svg>
           </p>
         </button>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button>
-              <p
-                className={`relative flex h-10 w-10 items-center justify-center 
+        {session.status == "authenticated" && (
+          <button
+            onClick={() => {
+              const filename = prompt("Please enter a filename:", "");
+              if (filename != null && filename != "") {
+                // todo: create file, file tree, all in local storage\
+                let name = filename,
+                  ext = "cpp";
+                if (filename.includes(".")) {
+                  name = filename.substring(0, filename.indexOf("."));
+                  ext = filename.substring(filename.indexOf(".") + 1);
+                }
+
+                const file: CodeRunnerFile = {
+                  name: name,
+                  language: ext,
+                  contents: getLanguage(ext, true).defaultCode,
+                };
+
+                setFileTree([...fileTree, file]);
+              }
+            }}
+          >
+            <p
+              className={`relative flex h-10 w-10 items-center justify-center 
                       ${"bg-secondary-700 text-accent-400 hover:rounded-xl hover:bg-accent-500 hover:text-primary-400"}
                       group rounded-3xl transition-all duration-200`}
-              >
-                <AiOutlineFileAdd className="h-6 w-6" />
-              </p>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="mx-6 flex w-60 flex-row justify-between bg-secondary-700 p-2">
-            {/* todo add file: keep in local storage */}
-          </PopoverContent>
-        </Popover>
+            >
+              <AiOutlineFileAdd className="h-6 w-6" />
+            </p>
+          </button>
+        )}
         <Select
           defaultValue={lang}
           onValueChange={(newValue: SetStateAction<string>) => {
+            setFileTree(
+              fileTree.map((file) => {
+                // todo: lang vs language vs extension
+                if (file.name == "main" && file.language == lang) {
+                  file.contents = getLanguage(newValue.toString()).defaultCode;
+                  file.language = newValue.toString();
+                }
+                return file;
+              })
+            );
+
             if (_isCoding) {
               if (
                 confirm(
@@ -201,7 +244,7 @@ const CodeRunnerPage: NextPage = () => {
             }
           }}
         >
-          <SelectTrigger className="max-w-[180px]">
+          <SelectTrigger>
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent>
@@ -230,17 +273,35 @@ const CodeRunnerPage: NextPage = () => {
           </p>
         </div>
       ) : (
-        session.status == "authenticated" && <div>todo: add file tree</div>
+        session.status ==
+          "authenticated" /* todo: add default file and change when select lang */ && (
+          <div className="mt-5">
+            {/* <h1>Files:</h1> */}
+            {fileTree.map((file) => {
+              return (
+                <div
+                  key={file.name}
+                  className="my-2 w-full rounded-lg bg-secondary-700 p-2 transition-all hover:cursor-pointer hover:bg-secondary-600"
+                  onClick={() => console.log(file.contents)}
+                >
+                  <p>
+                    {file.name}.{file.language}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );
 
   const editor = (
     <PanelGroup direction="vertical">
-      <Panel className="m-0" defaultSize={70} maxSize={90}>
+      <Panel className="m-0" defaultSize={70} maxSize={90} minSize={60}>
         <div className="flex w-full flex-row items-center justify-between">
           <div className="flex flex-row">
-            <div className="m-1 flex flex-row items-center justify-between gap-1 rounded-md bg-accent-500 px-2 py-1">
+            <div className="m-1 flex flex-row items-center justify-between gap-1 rounded-t-lg bg-accent-500 px-2 py-1">
               <p>main.{getLanguage(lang).extension}</p>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -299,7 +360,7 @@ const CodeRunnerPage: NextPage = () => {
       <Panel
         defaultSize={30}
         minSize={10}
-        maxSize={30}
+        maxSize={40}
         className="flex h-full flex-col "
       >
         <div className="h-full overflow-y-auto whitespace-pre bg-secondary-800 p-2 font-mono text-sm">
@@ -327,13 +388,13 @@ const CodeRunnerPage: NextPage = () => {
             </div>
           )}
         </div>
-        <div className="flex w-full flex-row gap-5 rounded-lg bg-secondary-700 p-1 transition-all">
+        <div className="flex w-full flex-row gap-5 border-t-2 border-secondary-700 bg-secondary-800 p-1 transition-all">
           <button
             className={cn(
               "rounded-lg border-2 p-2 transition-all",
               currentTab == "output"
                 ? "border-black bg-black text-accent-400"
-                : "border-secondary-700 hover:bg-secondary-600"
+                : "border-secondary-800 hover:bg-secondary-600"
             )}
             onClick={() => setCurrentTab("output")}
           >
@@ -344,7 +405,7 @@ const CodeRunnerPage: NextPage = () => {
               "rounded-lg border-2 p-2 transition-all",
               currentTab != "output"
                 ? "border-black bg-black text-accent-400"
-                : "border-secondary-700 hover:bg-secondary-600"
+                : "border-secondary-800 hover:bg-secondary-600"
             )}
             onClick={() => setCurrentTab("input")}
           >
@@ -366,14 +427,14 @@ const CodeRunnerPage: NextPage = () => {
             <Panel
               className="hidden md:block"
               collapsible={true}
-              defaultSize={20}
+              defaultSize={15}
               minSize={10}
-              maxSize={30}
+              maxSize={40}
             >
               {sidebar}
             </Panel>
             <PanelResizeHandle className="w-1 bg-secondary-800 focus:bg-secondary-600" />
-            <Panel minSize={70}>{editor}</Panel>
+            <Panel minSize={60}>{editor}</Panel>
           </>
         ) : (
           <>

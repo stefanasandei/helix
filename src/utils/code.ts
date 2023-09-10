@@ -33,14 +33,25 @@ export interface TestOutput {
   passed: boolean;
 }
 
+export interface CodeRunnerFile {
+  language: string;
+  name: string;
+  contents: string;
+}
+
 export const getLanguageVersion = (lang: string) => {
   const ver = supportedLanguages.find((l) => l.name == lang);
   if (ver != undefined) return ver.version;
   return "";
 };
 
-export const getLanguage = (lang: string): Language => {
-  const l = supportedLanguages.find((l) => l.name == lang);
+export const getLanguage = (lang: string, isExt = false): Language => {
+  let l: Language | undefined;
+  if (!isExt) {
+    l = supportedLanguages.find((l) => l.name == lang);
+  } else {
+    l = supportedLanguages.find((l) => l.extension == lang);
+  }
   return l as Language;
 };
 

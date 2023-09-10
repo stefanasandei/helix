@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import { CodeRunnerFile } from "./code";
 
 export const colorThemes = [
   "red",
@@ -37,3 +38,5 @@ export const yourTestsResultsAtom = atom<{ input: string; output: string }[]>(
 );
 
 export const isCodingAtom = atom<boolean>(false);
+
+export const fileTreeAtom = atomWithStorage<CodeRunnerFile[]>("fileTree", []);
