@@ -102,13 +102,13 @@ const CodeRunnerPage: NextPage = () => {
     setCode(newFile.contents);
   };
 
-  const createNewFile = () => {
-    const filename = prompt(
-      "Please enter a filename:",
-      fileTree.length == 0 ? "main.cpp" : ""
-    );
-    if (filename == null || filename == "") {
-      return;
+  const createNewFile = (userIsNormie = false) => {
+    let filename: string | null = fileTree.length == 0 ? "main.cpp" : "";
+    if (!userIsNormie) {
+      filename = prompt("Please enter a filename:", filename);
+      if (filename == null || filename == "") {
+        return;
+      }
     }
 
     let name = filename,
@@ -218,7 +218,7 @@ const CodeRunnerPage: NextPage = () => {
         </div>
       ) : (
         session.status == "authenticated" && (
-          <div className="mt-5">
+          <div className="mt-5 h-full">
             {fileTree.map((file) => {
               return (
                 <div
@@ -237,17 +237,19 @@ const CodeRunnerPage: NextPage = () => {
               );
             })}
             {fileTree.length == 0 && (
-              <div className="text-center">
-                <p>You have no file created.</p>
-                <p>
-                  <span
-                    onClick={() => createNewFile()}
-                    className="text-accent-500 hover:cursor-pointer hover:underline"
-                  >
-                    Click here
-                  </span>{" "}
-                  to create one.
-                </p>
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <p>You have no file created.</p>
+                  <p>
+                    <span
+                      onClick={() => createNewFile()}
+                      className="text-accent-500 hover:cursor-pointer hover:underline"
+                    >
+                      Click here
+                    </span>{" "}
+                    to create one.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -265,7 +267,7 @@ const CodeRunnerPage: NextPage = () => {
               <p>
                 {currentFile}.{getLanguage(lang).extension}
               </p>
-              <svg
+              {/* <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 20"
@@ -278,7 +280,7 @@ const CodeRunnerPage: NextPage = () => {
                   strokeLinejoin="round"
                   d="M6 18L18 6M6 6l12 12"
                 />
-              </svg>
+              </svg> */}
             </div>
           </div>
           <div className="mr-5 flex flex-row items-center gap-3">
@@ -394,8 +396,16 @@ const CodeRunnerPage: NextPage = () => {
           {fileTree.length > 0 || session.status == "unauthenticated" ? (
             editor
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <p>No file opened.</p>
+            <div className="mt-16 flex h-full items-center justify-center">
+              <p>
+                No file opened.{" "}
+                <span
+                  onClick={() => createNewFile(true)}
+                  className="text-accent-500 hover:cursor-pointer hover:underline"
+                >
+                  Create a new one!
+                </span>
+              </p>
             </div>
           )}
         </Panel>
