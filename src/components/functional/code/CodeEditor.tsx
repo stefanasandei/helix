@@ -27,16 +27,20 @@ export const codeEditorDefaults: CodeEditorSettings = {
 const CodeEditor = ({
   settings,
   onCodeChange,
+  onMount,
+  updatedCode,
 }: {
   settings: CodeEditorSettings;
   onCodeChange: (code: string) => void;
+  onMount?: () => void;
+  updatedCode?: string;
 }) => {
   const [code, setCode] = useState(settings.initialCode);
   const [vim, setVim] = useState<{ dispose: () => void } | undefined>(
     undefined
   );
 
-  const [isCoding, setIsCoding] = useAtom(isCodingAtom);
+  const [, setIsCoding] = useAtom(isCodingAtom);
 
   const monaco = useMonaco();
   useEffect(() => {
@@ -89,7 +93,7 @@ const CodeEditor = ({
           fontLigatures: true,
         }}
         defaultValue={code}
-        value={code}
+        value={updatedCode ?? code}
         onChange={(value, _) => {
           setCode(value as string);
           onCodeChange(value as string);
@@ -107,6 +111,8 @@ const CodeEditor = ({
           });
 
           setIsCoding(false);
+
+          if (onMount != undefined) onMount();
         }}
       />
     </div>

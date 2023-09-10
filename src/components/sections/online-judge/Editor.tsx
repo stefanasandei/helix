@@ -13,8 +13,8 @@ import UIPanel from "~/components/ui/UIPanel";
 import { type SetStateAction, useState } from "react";
 import CodeEditor, {
   codeEditorDefaults,
-} from "~/components/functional/CodeEditor";
-import EditorSettings from "~/components/functional/EditorSettings";
+} from "~/components/functional/code/CodeEditor";
+import EditorSettings from "~/components/functional/code/EditorSettings";
 import { api } from "~/utils/api";
 import { toastSuccess } from "~/utils/toast";
 import { supportedLanguages, testCode } from "~/utils/code";

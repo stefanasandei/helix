@@ -18,8 +18,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/Select";
-import { Checkbox } from "../ui/Checkbox";
+} from "../../ui/Select";
+import { Checkbox } from "../../ui/Checkbox";
 
 export type EditorSettingsProps = {
   fontSize: number;

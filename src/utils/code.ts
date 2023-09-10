@@ -34,7 +34,7 @@ export interface TestOutput {
 }
 
 export interface CodeRunnerFile {
-  language: string;
+  extension: string;
   name: string;
   contents: string;
 }

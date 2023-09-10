@@ -1,18 +1,16 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 /* eslint no-use-before-define: 0 */
-import { Editor, useMonaco } from "@monaco-editor/react";
 import { useAtom } from "jotai";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
-import { type SetStateAction, useEffect, useState } from "react";
+import { type SetStateAction, useState } from "react";
 import { PanelGroup, PanelResizeHandle, Panel } from "react-resizable-panels";
-import { useWindowSize } from "usehooks-ts";
 import EditorSettings, {
   getDefaultEditorSettings,
-} from "~/components/functional/EditorSettings";
+} from "~/components/functional/code/EditorSettings";
 import AppShell from "~/components/ui/AppShell";
 import { LoadingSpinner } from "~/components/ui/Loading";
 import {
@@ -24,21 +22,24 @@ import {
 } from "~/components/ui/Select";
 import { Textarea } from "~/components/ui/Textarea";
 import { api } from "~/utils/api";
-import { fileTreeAtom, isCodingAtom } from "~/utils/atoms";
+import { fileTreeAtom } from "~/utils/atoms";
 import { cn } from "~/utils/cn";
 import {
   type CodeRunnerFile,
-  addHaskellSyntax,
   getLanguage,
   supportedLanguages,
 } from "~/utils/code";
-import { registerThemes, type Theme } from "~/utils/monaco-themes";
+import { type Theme } from "~/utils/monaco-themes";
 import { AiOutlineFileAdd } from "react-icons/ai";
+import CodeEditor, {
+  codeEditorDefaults,
+} from "~/components/functional/code/CodeEditor";
+import { SlOptionsVertical } from "react-icons/sl";
 
-// yes this should be broken into multiple components
 const CodeRunnerPage: NextPage = () => {
   const session = useSession();
 
+  // code settings
   const [output, setOutput] = useState("");
   const [lang, setLang] = useState("cpp");
   const [code, setCode] = useState(getLanguage(lang).defaultCode);
@@ -49,60 +50,14 @@ const CodeRunnerPage: NextPage = () => {
   );
   const [theme, setTheme] = useState<Theme>(getDefaultEditorSettings().theme);
   const [vimMode, setVimMode] = useState<boolean>(false);
-  const [vim, setVim] = useState<{ dispose: () => void } | undefined>(
-    undefined
-  );
 
-  const [_isCoding, setIsCoding] = useAtom(isCodingAtom);
+  // files state
+  const [currentFile, setCurrentFile] = useState<string>("main");
   const [fileTree, setFileTree] = useAtom(fileTreeAtom);
 
-  const [isLeftSide] = useState(true);
+  // bottom io bar
   const [currentTab, setCurrentTab] = useState<"output" | "input">("output");
   const [input, setInput] = useState("");
-
-  const size = useWindowSize();
-
-  const monaco = useMonaco();
-  useEffect(() => {
-    if (!monaco) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    addHaskellSyntax(monaco);
-
-    registerThemes(monaco);
-
-    setFontSize(getDefaultEditorSettings().fontSize);
-    setFontFamily(getDefaultEditorSettings().fontFamily);
-    setTheme(getDefaultEditorSettings().theme);
-    setVimMode(getDefaultEditorSettings().vimMode);
-
-    monaco.editor.setTheme(theme);
-
-    if (vimMode) {
-      const enableVim = (MonacoVim: {
-        initVimMode: (
-          arg0: unknown | undefined,
-          arg1: HTMLElement | null
-        ) => { dispose: () => void };
-      }) => {
-        setVim(
-          MonacoVim.initVimMode(
-            monaco.editor.getEditors()[0],
-            document.getElementById("vim-bar")
-          ) as { dispose: () => void }
-        );
-      };
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      window.require(["monaco-vim"], enableVim);
-    } else {
-      if (vim != undefined) {
-        vim.dispose();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monaco, theme, vimMode]);
 
   const runCode = api.code.runCode.useMutation({
     onSuccess: (data) => {
@@ -111,47 +66,71 @@ const CodeRunnerPage: NextPage = () => {
     },
   });
 
-  const handleEditorChange = (value: string | undefined, _: unknown) => {
-    setCode(value as string);
-    setIsCoding(true);
+  const onEditorChange = (code: string) => {
+    setCode(code);
 
     setFileTree(
       fileTree.map((file) => {
-        // todo: lang vs language vs extension
-        if (file.name == "main" && file.language == lang)
-          file.contents = value as string;
+        if (file.name == currentFile) file.contents = code;
         return file;
       })
     );
   };
 
-  const handleEditorMount = (_editor: unknown, _monaco: unknown) => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    window.require.config({
-      paths: {
-        "monaco-vim": "https://unpkg.com/monaco-vim@0.4.0/dist/monaco-vim.js",
-      },
-    });
-
-    if (fileTree.length == 0) {
-      // todo...
-      setIsCoding(false);
-      setFileTree([
-        {
-          contents: code,
-          language: lang,
-          name: "main",
-        },
-      ]);
-    } else setIsCoding(true);
+  const onEditorMount = () => {
+    // if (fileTree.length == 0) {
+    //   setFileTree([
+    //     {
+    //       contents: code,
+    //       extension: getLanguage(lang).extension,
+    //       name: currentFile,
+    //     },
+    //   ]);
+    // }
   };
 
   const run = () => {
     setExecuting(true);
     setCurrentTab("output");
     runCode.mutate({ code: code, language: lang, input: input });
+  };
+
+  const changeFile = (newFile: CodeRunnerFile) => {
+    setCurrentFile(newFile.name);
+
+    setLang(getLanguage(newFile.extension, true).name);
+    setCode(newFile.contents);
+  };
+
+  const createNewFile = () => {
+    const filename = prompt(
+      "Please enter a filename:",
+      fileTree.length == 0 ? "main.cpp" : ""
+    );
+    if (filename == null || filename == "") {
+      return;
+    }
+
+    let name = filename,
+      ext = codeEditorDefaults.lang;
+
+    if (filename.includes(".")) {
+      name = filename.substring(0, filename.indexOf("."));
+      ext = filename.substring(filename.indexOf(".") + 1);
+    }
+
+    const file: CodeRunnerFile = {
+      name: name,
+      extension: ext,
+      contents: getLanguage(ext, true).defaultCode,
+    };
+
+    setFileTree([...fileTree, file]);
+  };
+
+  const deleteFile = (oldFile: CodeRunnerFile) => {
+    if (confirm(`Delete ${oldFile.name}.${oldFile.extension}?`))
+      setFileTree(fileTree.filter((file) => file.name != oldFile.name));
   };
 
   const sidebar = (
@@ -180,28 +159,7 @@ const CodeRunnerPage: NextPage = () => {
           </p>
         </button>
         {session.status == "authenticated" && (
-          <button
-            onClick={() => {
-              const filename = prompt("Please enter a filename:", "");
-              if (filename != null && filename != "") {
-                // todo: create file, file tree, all in local storage\
-                let name = filename,
-                  ext = "cpp";
-                if (filename.includes(".")) {
-                  name = filename.substring(0, filename.indexOf("."));
-                  ext = filename.substring(filename.indexOf(".") + 1);
-                }
-
-                const file: CodeRunnerFile = {
-                  name: name,
-                  language: ext,
-                  contents: getLanguage(ext, true).defaultCode,
-                };
-
-                setFileTree([...fileTree, file]);
-              }
-            }}
-          >
+          <button onClick={() => createNewFile()}>
             <p
               className={`relative flex h-10 w-10 items-center justify-center 
                       ${"bg-secondary-700 text-accent-400 hover:rounded-xl hover:bg-accent-500 hover:text-primary-400"}
@@ -214,34 +172,20 @@ const CodeRunnerPage: NextPage = () => {
         <Select
           defaultValue={lang}
           onValueChange={(newValue: SetStateAction<string>) => {
+            const newLang = getLanguage(newValue.toString());
+
             setFileTree(
               fileTree.map((file) => {
-                // todo: lang vs language vs extension
-                if (file.name == "main" && file.language == lang) {
-                  file.contents = getLanguage(newValue.toString()).defaultCode;
-                  file.language = newValue.toString();
+                if (file.name == currentFile) {
+                  file.contents = newLang.defaultCode;
+                  file.extension = newLang.extension;
                 }
                 return file;
               })
             );
 
-            if (_isCoding) {
-              if (
-                confirm(
-                  "You have unsaved changes. Do you want to switch the language?"
-                )
-              ) {
-                setLang(newValue.toString());
-                setCode(getLanguage(newValue.toString()).defaultCode);
-                setOutput("");
-                setIsCoding(false);
-              }
-            } else {
-              setLang(newValue.toString());
-              setCode(getLanguage(newValue.toString()).defaultCode);
-              setOutput("");
-              setIsCoding(false);
-            }
+            setLang(newValue.toString());
+            setOutput("");
           }}
         >
           <SelectTrigger>
@@ -273,23 +217,39 @@ const CodeRunnerPage: NextPage = () => {
           </p>
         </div>
       ) : (
-        session.status ==
-          "authenticated" /* todo: add default file and change when select lang */ && (
+        session.status == "authenticated" && (
           <div className="mt-5">
-            {/* <h1>Files:</h1> */}
             {fileTree.map((file) => {
               return (
                 <div
                   key={file.name}
-                  className="my-2 w-full rounded-lg bg-secondary-700 p-2 transition-all hover:cursor-pointer hover:bg-secondary-600"
-                  onClick={() => console.log(file.contents)}
+                  className="my-2 flex w-full flex-row justify-between rounded-lg 
+                  bg-secondary-700 p-2 transition-all hover:cursor-pointer hover:bg-secondary-600"
+                  onClick={() => changeFile(file)}
                 >
                   <p>
-                    {file.name}.{file.language}
+                    {file.name}.{file.extension}
                   </p>
+                  <button onClick={() => deleteFile(file)}>
+                    <SlOptionsVertical />
+                  </button>
                 </div>
               );
             })}
+            {fileTree.length == 0 && (
+              <div className="text-center">
+                <p>You have no file created.</p>
+                <p>
+                  <span
+                    onClick={() => createNewFile()}
+                    className="text-accent-500 hover:cursor-pointer hover:underline"
+                  >
+                    Click here
+                  </span>{" "}
+                  to create one.
+                </p>
+              </div>
+            )}
           </div>
         )
       )}
@@ -301,8 +261,10 @@ const CodeRunnerPage: NextPage = () => {
       <Panel className="m-0" defaultSize={70} maxSize={90} minSize={60}>
         <div className="flex w-full flex-row items-center justify-between">
           <div className="flex flex-row">
-            <div className="m-1 flex flex-row items-center justify-between gap-1 rounded-t-lg bg-accent-500 px-2 py-1">
-              <p>main.{getLanguage(lang).extension}</p>
+            <div className="m-1 flex flex-row items-center justify-between gap-1 rounded-lg bg-accent-500 px-2 py-1">
+              <p>
+                {currentFile}.{getLanguage(lang).extension}
+              </p>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -338,22 +300,18 @@ const CodeRunnerPage: NextPage = () => {
             />
           </div>
         </div>
-        <Editor
-          height="90vh"
-          loading={<LoadingSpinner />}
-          defaultLanguage={lang}
-          language={lang}
-          theme={theme as string}
-          options={{
-            smoothScrolling: true,
-            fontSize: fontSize,
+        <CodeEditor
+          settings={{
             fontFamily: fontFamily,
-            fontLigatures: true,
+            fontSize: fontSize,
+            initialCode: code,
+            lang: lang,
+            theme: theme,
+            vimMode: vimMode,
           }}
-          defaultValue={code}
-          value={code}
-          onChange={handleEditorChange}
-          onMount={handleEditorMount}
+          onCodeChange={onEditorChange}
+          onMount={onEditorMount}
+          updatedCode={code}
         />
       </Panel>
       <PanelResizeHandle className="h-1 bg-secondary-800 focus:bg-secondary-600" />
@@ -388,7 +346,7 @@ const CodeRunnerPage: NextPage = () => {
             </div>
           )}
         </div>
-        <div className="flex w-full flex-row gap-5 border-t-2 border-secondary-700 bg-secondary-800 p-1 transition-all">
+        <div className="flex w-full flex-row gap-5 bg-secondary-800 p-1 transition-all">
           <button
             className={cn(
               "rounded-lg border-2 p-2 transition-all",
@@ -422,36 +380,25 @@ const CodeRunnerPage: NextPage = () => {
         <title>Helix | Code Runner</title>
       </Head>
       <PanelGroup direction="horizontal">
-        {isLeftSide ? (
-          <>
-            <Panel
-              className="hidden md:block"
-              collapsible={true}
-              defaultSize={15}
-              minSize={10}
-              maxSize={40}
-            >
-              {sidebar}
-            </Panel>
-            <PanelResizeHandle className="w-1 bg-secondary-800 focus:bg-secondary-600" />
-            <Panel minSize={60}>{editor}</Panel>
-          </>
-        ) : (
-          <>
-            <Panel minSize={70}>{editor}</Panel>
-            <PanelResizeHandle className="w-1 bg-secondary-800 focus:bg-secondary-600" />
-            {size.width > 768 && (
-              <Panel
-                collapsible={true}
-                defaultSize={20}
-                minSize={10}
-                maxSize={30}
-              >
-                {sidebar}
-              </Panel>
-            )}
-          </>
-        )}
+        <Panel
+          className="hidden md:block"
+          collapsible={true}
+          defaultSize={20}
+          minSize={10}
+          maxSize={40}
+        >
+          {sidebar}
+        </Panel>
+        <PanelResizeHandle className="w-1 bg-secondary-800 focus:bg-secondary-600" />
+        <Panel minSize={60}>
+          {fileTree.length > 0 ? (
+            editor
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <p>No file opened.</p>
+            </div>
+          )}
+        </Panel>
       </PanelGroup>
     </AppShell>
   );
