@@ -391,7 +391,7 @@ const CodeRunnerPage: NextPage = () => {
         </Panel>
         <PanelResizeHandle className="w-1 bg-secondary-800 focus:bg-secondary-600" />
         <Panel minSize={60}>
-          {fileTree.length > 0 ? (
+          {fileTree.length > 0 || session.status == "unauthenticated" ? (
             editor
           ) : (
             <div className="flex h-full items-center justify-center">
