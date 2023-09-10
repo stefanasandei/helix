@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { PanelGroup, Panel } from "react-resizable-panels";
 import EditorSettings, {
   getDefaultEditorSettings,
-} from "~/components/functional/EditorSettings";
+} from "~/components/functional/code/EditorSettings";
 import PreviewShader from "~/components/sections/PreviewShader";
 import AppShell from "~/components/ui/AppShell";
 import { LoadingSpinner } from "~/components/ui/Loading";
