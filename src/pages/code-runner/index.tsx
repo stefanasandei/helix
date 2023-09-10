@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-/* eslint no-use-before-define: 0 */
 import { useAtom } from "jotai";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
