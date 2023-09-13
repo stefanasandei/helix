@@ -60,22 +60,32 @@ export const runCode = async (
   lang: string,
   input?: string
 ): Promise<Output | undefined> => {
-  const version = getLanguageVersion(lang);
-  if (version == "") return undefined;
+  const langData = getLanguage(lang);
+  if (langData.version == "") return undefined;
 
-  const endpoint = "https://emkc.org/api/v2/piston";
+  // const endpoint = "https://emkc.org/api/v2/piston";
+  const endpoint = "https://exec-4lir.onrender.com/api/v1";
+
   const res = await axios.post(endpoint + "/execute", {
     language: lang,
-    version: version,
+    version: langData.version,
     files: [
       {
+        name: "main." + langData.extension,
         content: code,
       },
     ],
     stdin: input,
   });
 
-  return res.data as Output;
+  const output = res.data as Output;
+  const badText = "Not having root privileges, won't isolate the process.\n"; // I know, I know...
+
+  if (output.run.output.startsWith(badText)) {
+    output.run.output = output.run.output.substring(badText.length);
+  }
+
+  return output;
 };
 
 export const testCode = async (
@@ -127,20 +137,20 @@ export const supportedLanguages: Language[] = [
     defaultCode: `#include <iostream>\n\nint main() {\n\tstd::cout << "Hello world from C++\\n";\n\treturn 0;\n}\n`,
     extension: "cpp",
   },
-  {
-    name: "java",
-    fancyName: "Java",
-    version: "15.0.2",
-    defaultCode: `class Program {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello world from Java");\n\t}\n}\n`,
-    extension: "java",
-  },
-  {
-    name: "elixir",
-    fancyName: "Elixir",
-    version: "1.11.3",
-    defaultCode: `IO.puts("Hello world from Elixir")\n`,
-    extension: "ex",
-  },
+  // {
+  //   name: "java",
+  //   fancyName: "Java",
+  //   version: "15.0.2",
+  //   defaultCode: `class Program {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello world from Java");\n\t}\n}\n`,
+  //   extension: "java",
+  // },
+  // {
+  //   name: "elixir",
+  //   fancyName: "Elixir",
+  //   version: "1.11.3",
+  //   defaultCode: `IO.puts("Hello world from Elixir")\n`,
+  //   extension: "ex",
+  // },
   {
     name: "c",
     fancyName: "C",
@@ -148,13 +158,13 @@ export const supportedLanguages: Language[] = [
     defaultCode: `#include <stdio.h>\n\nint main() {\n\tprintf("Hello world from C\\n");\n\treturn 0;\n}\n`,
     extension: "c",
   },
-  {
-    name: "go",
-    fancyName: "Go",
-    version: "1.16.2",
-    defaultCode: `package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello world from Go")\n}\n`,
-    extension: "go",
-  },
+  // {
+  //   name: "go",
+  //   fancyName: "Go",
+  //   version: "1.16.2",
+  //   defaultCode: `package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello world from Go")\n}\n`,
+  //   extension: "go",
+  // },
   {
     name: "haskell",
     fancyName: "Haskell",
@@ -162,13 +172,13 @@ export const supportedLanguages: Language[] = [
     defaultCode: `main :: IO ()\n\nmain = putStrLn "Hello world from Haskell"\n`,
     extension: "hs",
   },
-  {
-    name: "python",
-    fancyName: "Python",
-    version: "3.10.0",
-    defaultCode: `print("Hello world from Python")\n`,
-    extension: "py",
-  },
+  // {
+  //   name: "python",
+  //   fancyName: "Python",
+  //   version: "3.10.0",
+  //   defaultCode: `print("Hello world from Python")\n`,
+  //   extension: "py",
+  // },
   {
     name: "rust",
     fancyName: "Rust",
@@ -176,27 +186,27 @@ export const supportedLanguages: Language[] = [
     defaultCode: `fn main() {\n\tprintln!("Hello world from Rust");\n}\n`,
     extension: "rs",
   },
-  {
-    name: "swift",
-    fancyName: "Swift",
-    version: "5.3.3",
-    defaultCode: `print("Hello world from Swift")\n`,
-    extension: "swift",
-  },
-  {
-    name: "javascript",
-    fancyName: "JavaScript",
-    version: "1.32.3",
-    defaultCode: `console.log("Hello world from JavaScript");`,
-    extension: "js",
-  },
-  {
-    name: "typescript",
-    fancyName: "TypeScript",
-    version: "5.0.3",
-    defaultCode: `console.log("Hello world from TypeScript");`,
-    extension: "ts",
-  },
+  // {
+  //   name: "swift",
+  //   fancyName: "Swift",
+  //   version: "5.3.3",
+  //   defaultCode: `print("Hello world from Swift")\n`,
+  //   extension: "swift",
+  // },
+  // {
+  //   name: "javascript",
+  //   fancyName: "JavaScript",
+  //   version: "1.32.3",
+  //   defaultCode: `console.log("Hello world from JavaScript");`,
+  //   extension: "js",
+  // },
+  // {
+  //   name: "typescript",
+  //   fancyName: "TypeScript",
+  //   version: "5.0.3",
+  //   defaultCode: `console.log("Hello world from TypeScript");`,
+  //   extension: "ts",
+  // },
 ];
 
 export const addHaskellSyntax = (monaco: Monaco) => {
