@@ -1,5 +1,6 @@
 import { useAtom } from "jotai";
 import { type NextPage } from "next";
+import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
@@ -36,10 +37,21 @@ import { SlOptionsVertical } from "react-icons/sl";
 const CodeRunnerPage: NextPage = () => {
   const session = useSession();
 
+  // files state
+  const [fileTree, setFileTree] = useAtom(fileTreeAtom);
+
+  const [currentFile, setCurrentFile] = useState<string>(
+    fileTree[0]?.name ?? "main"
+  );
+  const [lang, setLang] = useState(
+    getLanguage(fileTree[0]?.extension ?? "cpp", true).name
+  );
+  const [code, setCode] = useState(
+    fileTree[0]?.contents ?? getLanguage(lang).defaultCode
+  );
+
   // code settings
   const [output, setOutput] = useState("");
-  const [lang, setLang] = useState("cpp");
-  const [code, setCode] = useState(getLanguage(lang).defaultCode);
   const [executing, setExecuting] = useState(false);
   const [fontSize, setFontSize] = useState(getDefaultEditorSettings().fontSize);
   const [fontFamily, setFontFamily] = useState(
@@ -47,10 +59,6 @@ const CodeRunnerPage: NextPage = () => {
   );
   const [theme, setTheme] = useState<Theme>(getDefaultEditorSettings().theme);
   const [vimMode, setVimMode] = useState<boolean>(false);
-
-  // files state
-  const [currentFile, setCurrentFile] = useState<string>("main");
-  const [fileTree, setFileTree] = useAtom(fileTreeAtom);
 
   // bottom io bar
   const [currentTab, setCurrentTab] = useState<"output" | "input">("output");
@@ -74,17 +82,22 @@ const CodeRunnerPage: NextPage = () => {
     );
   };
 
-  const onEditorMount = () => {
-    // if (fileTree.length == 0) {
-    //   setFileTree([
-    //     {
-    //       contents: code,
-    //       extension: getLanguage(lang).extension,
-    //       name: currentFile,
-    //     },
-    //   ]);
-    // }
-  };
+  useEffect(() => {
+    if (fileTree.length == 0 || fileTree == undefined) {
+      return;
+      // setFileTree([
+      //   {
+      //     contents: code,
+      //     extension: getLanguage(lang).extension,
+      //     name: currentFile,
+      //   },
+      // ]);
+    }
+
+    setCurrentFile(fileTree[0]?.name ?? "main");
+    setLang(getLanguage(fileTree[0]?.extension ?? "cpp", true).name);
+    setCode(fileTree[0]?.contents ?? getLanguage(lang).defaultCode);
+  }, [code, currentFile, fileTree, lang, setFileTree]);
 
   const run = () => {
     setExecuting(true);
@@ -167,14 +180,14 @@ const CodeRunnerPage: NextPage = () => {
           </button>
         )}
         <Select
-          defaultValue={lang}
+          value={lang}
           onValueChange={(newValue: SetStateAction<string>) => {
             const newLang = getLanguage(newValue.toString());
 
             setFileTree(
               fileTree.map((file) => {
                 if (file.name == currentFile) {
-                  file.contents = newLang.defaultCode;
+                  // file.contents = newLang.defaultCode;
                   file.extension = newLang.extension;
                 }
                 return file;
@@ -309,7 +322,6 @@ const CodeRunnerPage: NextPage = () => {
             vimMode: vimMode,
           }}
           onCodeChange={onEditorChange}
-          onMount={onEditorMount}
           updatedCode={code}
         />
       </Panel>
