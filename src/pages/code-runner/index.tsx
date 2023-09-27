@@ -39,6 +39,7 @@ const CodeRunnerPage: NextPage = () => {
 
   // files state
   const [fileTree, setFileTree] = useAtom(fileTreeAtom);
+  const [loaded, setLoaded] = useState(false);
 
   const [currentFile, setCurrentFile] = useState<string>(
     fileTree[0]?.name ?? "main"
@@ -94,10 +95,13 @@ const CodeRunnerPage: NextPage = () => {
       // ]);
     }
 
+    if (loaded) return;
+    setLoaded(true);
+
     setCurrentFile(fileTree[0]?.name ?? "main");
     setLang(getLanguage(fileTree[0]?.extension ?? "cpp", true).name);
     setCode(fileTree[0]?.contents ?? getLanguage(lang).defaultCode);
-  }, [code, currentFile, fileTree, lang, setFileTree]);
+  }, [fileTree, lang, loaded]);
 
   const run = () => {
     setExecuting(true);
