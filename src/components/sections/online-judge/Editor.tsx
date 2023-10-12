@@ -24,7 +24,7 @@ import {
   yourTestsAtom,
   yourTestsResultsAtom,
 } from "~/utils/atoms";
-import { Submission, SubmissionTest } from "@prisma/client";
+import { type Submission, type SubmissionTest } from "@prisma/client";
 
 const Editor = ({
   problemId,

@@ -41,9 +41,13 @@ export const Results = () => {
             {yourTestsResults.map(
               (test: { input: string; output: string }, index) => (
                 <TableRow key={test.input}>
-                  <TableCell>{index}</TableCell>
-                  <TableCell>{test.input}</TableCell>
-                  <TableCell>{test.output}</TableCell>
+                  <TableCell className="align-top">{index}</TableCell>
+                  <TableCell className="whitespace-pre-wrap align-top font-mono">
+                    {test.input}
+                  </TableCell>
+                  <TableCell className="whitespace-pre-wrap align-top font-mono">
+                    {test.output}
+                  </TableCell>
                 </TableRow>
               )
             )}

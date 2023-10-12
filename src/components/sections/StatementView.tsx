@@ -59,9 +59,11 @@ export const StatementView = (props: { problem: ProblemMetadata }) => {
             </TableHeader>
             <TableBody>
               {props.problem.inputs.map((input, index) => (
-                <TableRow key={input}>
-                  <TableCell className="font-mono">{input}</TableCell>
-                  <TableCell className="font-mono">
+                <TableRow key={input} className="text-start">
+                  <TableCell className="whitespace-pre align-top font-mono">
+                    {input}
+                  </TableCell>
+                  <TableCell className="whitespace-pre align-top font-mono">
                     {props.problem.outputs[index]}
                   </TableCell>
                 </TableRow>
