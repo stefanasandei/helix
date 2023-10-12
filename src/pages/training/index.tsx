@@ -2,6 +2,7 @@ import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { ContestsTable } from "~/components/sections/ContestsTable";
 import AppShell from "~/components/ui/AppShell";
 import { Button } from "~/components/ui/Button";
@@ -17,6 +18,7 @@ import { LoadingSection } from "~/components/ui/Loading";
 import { Progress } from "~/components/ui/Progress";
 import { api } from "~/utils/api";
 import { type CategoryProgress } from "~/utils/code";
+import { toastPlain } from "~/utils/toast";
 
 const TrainingPage: NextPage = () => {
   const session = useSession();
@@ -25,12 +27,19 @@ const TrainingPage: NextPage = () => {
   const ctfProgress = api.ctf.getProgress.useQuery();
   const eulerProgress: CategoryProgress = { count: 0, progress: 0.0 };
 
+  const router = useRouter();
+
   if (
     session.status === "loading" ||
     cpProgress.isLoading ||
     ctfProgress.isLoading
   )
     return <LoadingSection />;
+
+  if (session.status === "unauthenticated") {
+    void router.push("/");
+    toastPlain("You need to be logged in to access this page!");
+  }
 
   return (
     <AppShell>

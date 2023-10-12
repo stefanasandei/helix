@@ -126,13 +126,16 @@ export const problemRouter = createTRPCRouter({
         },
       });
     }),
-  getSubmissions: protectedProcedure
+  getSubmissions: publicProcedure
     .input(
       z.object({
         problemId: z.number(),
       })
     )
     .query(async ({ ctx, input }) => {
+      if (ctx.session == null)
+        return [];
+
       return await ctx.prisma.submission.findMany({
         where: { problemId: input.problemId, userId: ctx.session.user.id },
         include: {
@@ -143,12 +146,13 @@ export const problemRouter = createTRPCRouter({
         orderBy: { createdAt: "desc" },
       });
     }),
-  sendSubmission: protectedProcedure
+  sendSubmission: publicProcedure
     .input(
       z.object({
         source: z.string(),
         language: z.string(),
         problemId: z.number(),
+        isAnon: z.boolean()
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -167,6 +171,24 @@ export const problemRouter = createTRPCRouter({
         });
 
       let totalScore = 0;
+      const submissionData = {
+        problemId: input.problemId,
+        source: input.source,
+        language: input.language,
+        tests: res.map((test) => {
+          totalScore += test.points;
+          return {
+            passed: test.points != 0,
+            points: test.points,
+          };
+        }),
+      };
+
+      if (input.isAnon || ctx.session == null) {
+        return submissionData;
+      }
+
+      // user is authed, add that submission
 
       const submission = await ctx.prisma.submission.create({
         data: {
@@ -177,14 +199,13 @@ export const problemRouter = createTRPCRouter({
           tests: {
             createMany: {
               data: res.map((test) => {
-                totalScore += test.points;
                 return {
                   passed: test.points != 0,
                   points: test.points,
                 };
               }),
             },
-          },
+          }
         },
       });
 
@@ -193,6 +214,7 @@ export const problemRouter = createTRPCRouter({
           where: { id: ctx.session.user.id },
           select: { solved_problems: true },
         });
+
         if (!solved?.solved_problems.includes(input.problemId)) {
           await ctx.prisma.user.update({
             where: { id: ctx.session.user.id },

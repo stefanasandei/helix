@@ -3,14 +3,22 @@ import SubmissionsView from "./SubmissionsView";
 import { YourTests } from "./YourTests";
 import { Results } from "./Results";
 
-const Solutions = ({ problemId }: { problemId: number }) => {
+const Solutions = ({
+  isAnon,
+  problemId,
+}: {
+  isAnon: boolean;
+  problemId: number;
+}) => {
   return (
     <div className="h-full">
       <UIPanel
         pages={[
           {
             name: "Solutions",
-            component: <SubmissionsView problemId={problemId} />,
+            component: (
+              <SubmissionsView problemId={problemId} isAnon={isAnon} />
+            ),
           },
           {
             name: "Your tests",

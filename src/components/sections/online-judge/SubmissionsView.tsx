@@ -37,7 +37,13 @@ type CompleteSubmission = Submission & {
   tests: SubmissionTest[];
 };
 
-const SubmissionsView = ({ problemId }: { problemId: number }) => {
+const SubmissionsView = ({
+  problemId,
+  isAnon,
+}: {
+  problemId: number;
+  isAnon: boolean;
+}) => {
   const submissions = api.problem.getSubmissions.useQuery({
     problemId: problemId,
   });
@@ -52,6 +58,7 @@ const SubmissionsView = ({ problemId }: { problemId: number }) => {
     );
 
   const data = submissions.data as CompleteSubmission[];
+  console.log(data);
 
   return (
     <div className="h-full overflow-y-scroll">
@@ -70,12 +77,18 @@ const SubmissionsView = ({ problemId }: { problemId: number }) => {
             <TableBody>
               {data.map((submission) => (
                 <TableRow key={submission.id}>
-                  <TableCell>{submission.user.name}</TableCell>
-                  <TableCell>{submission.problem.title}</TableCell>
                   <TableCell>
-                    {dayjs(submission.createdAt.toISOString()).format(
-                      "DD.MM.YYYY HH:MM"
-                    )}
+                    {!isAnon ? submission.user.name : "anonymous"}
+                  </TableCell>
+                  <TableCell>
+                    {!isAnon ? submission.problem.title : "unknown"}
+                  </TableCell>
+                  <TableCell>
+                    {!isAnon
+                      ? dayjs(submission.createdAt.toISOString()).format(
+                          "DD.MM.YYYY HH:MM"
+                        )
+                      : "now"}
                   </TableCell>
                   <TableCell>
                     <Dialog>

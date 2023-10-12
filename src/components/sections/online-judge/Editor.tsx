@@ -24,8 +24,15 @@ import {
   yourTestsAtom,
   yourTestsResultsAtom,
 } from "~/utils/atoms";
+import { Submission, SubmissionTest } from "@prisma/client";
 
-const Editor = ({ problemId }: { problemId: number }) => {
+const Editor = ({
+  problemId,
+  isAnon,
+}: {
+  problemId: number;
+  isAnon: boolean;
+}) => {
   const [settings, setSettings] = useState(codeEditorDefaults);
   const [lang, setLang] = useState(settings.lang);
   const [code, setCode] = useState(settings.initialCode);
@@ -46,9 +53,33 @@ const Editor = ({ problemId }: { problemId: number }) => {
     onMutate: () => {
       setSubmissionLoading(true);
     },
-    onSuccess: async () => {
+    onSuccess: async (
+      data:
+        | Submission
+        | {
+            problemId: number;
+            source: string;
+            language: string;
+            tests: { passed: boolean; points: number }[];
+          }
+    ) => {
       setSubmissionLoading(false);
-      await context.problem.getSubmissions.invalidate({ problemId: problemId });
+
+      if (!isAnon) {
+        await context.problem.getSubmissions.invalidate({
+          problemId: problemId,
+        });
+      } else {
+        // console.log(data);
+
+        context.problem.getSubmissions.setData({ problemId: problemId }, [
+          data as Submission & {
+            user: { id: string; name: string | null };
+            problem: { id: number; title: string };
+            tests: SubmissionTest[];
+          },
+        ]);
+      }
     },
   });
 
@@ -98,6 +129,7 @@ const Editor = ({ problemId }: { problemId: number }) => {
                   language: lang,
                   source: code,
                   problemId: problemId,
+                  isAnon: isAnon,
                 });
                 toastSuccess("Submission sent!");
               }}

@@ -18,6 +18,8 @@ const OnlineJudgePage: NextPage = () => {
   const router = useRouter();
   const size = useWindowSize();
 
+  let isAnon = false;
+
   const problem = api.problem.getProblemById.useQuery({
     id: parseInt(router.query.id as string),
   });
@@ -26,8 +28,9 @@ const OnlineJudgePage: NextPage = () => {
     return <LoadingSection />;
 
   if (session.status === "unauthenticated") {
-    void router.push("/");
-    toastPlain("You need to be logged in to access this page!");
+    isAnon = true;
+    // void router.push("/");
+    // toastPlain("You need to be logged in to access this page!");
   }
 
   if (problem.data == null || problem.isError) {
@@ -53,11 +56,11 @@ const OnlineJudgePage: NextPage = () => {
             <Panel defaultSize={50} minSize={30} maxSize={58}>
               <PanelGroup direction="vertical" className="min-h-screen">
                 <Panel defaultSize={75} minSize={20} maxSize={85}>
-                  <Editor problemId={problem.data.id} />
+                  <Editor problemId={problem.data.id} isAnon={isAnon} />
                 </Panel>
                 <PanelResizeHandle className="h-1 bg-secondary-700 focus:bg-secondary-600" />
                 <Panel defaultSize={25} minSize={15} maxSize={80}>
-                  <Solutions problemId={problem.data.id} />
+                  <Solutions problemId={problem.data.id} isAnon={isAnon} />
                 </Panel>
               </PanelGroup>
             </Panel>
