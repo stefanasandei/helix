@@ -3,6 +3,7 @@ import UIPanel from "~/components/ui/UIPanel";
 import { Scracthpad } from "../Scratchpad";
 import { type ProblemMetadata, StatementView } from "../StatementView";
 import Link from "next/link";
+import { Editorial } from "./Editorial";
 
 const Informations = (props: { problem: ProblemMetadata }) => {
   return (
@@ -19,7 +20,7 @@ const Informations = (props: { problem: ProblemMetadata }) => {
           },
           {
             name: "Editorial",
-            component: <p>No editorial published yet for this problem.</p>,
+            component: <Editorial name={props.problem.title} />,
           },
         ]}
         controls={
