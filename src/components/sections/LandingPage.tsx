@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 import Image from "next/image";
 
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
@@ -413,13 +415,14 @@ const LandingPage = () => {
                   <TableCell>✅</TableCell>
                   <TableCell>✅</TableCell>
                 </TableRow>
+                {/* 
                 <TableRow>
                   <TableCell>Free courses (WIP)</TableCell>
                   <TableCell>❌</TableCell>
-                  {/* <TableCell>❌</TableCell> */}
                   <TableCell>❌</TableCell>
                   <TableCell>✅</TableCell>
-                </TableRow>
+                </TableRow> 
+                */}
                 <TableRow>
                   <TableCell>Custom help</TableCell>
                   <TableCell>❌</TableCell>
@@ -449,6 +452,49 @@ const LandingPage = () => {
                 </TableRow>
               </TableBody>
             </Table>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 50,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            delay: 0.3,
+            duration: 0.5,
+          }}
+        >
+          <div className="w-full max-w-6xl px-4 pt-12 lg:mx-auto ">
+            <h1 className="mx-auto mb-20 max-w-[20ch] text-center text-5xl font-extrabold tracking-tighter">
+              Sponsors
+            </h1>
+            <div className="flex w-full">
+              <div className="mx-auto">
+                <img
+                  src="https://uploads-ssl.webflow.com/63d93bbadbe872564cebbb37/63d9454769f8a6423cd69c4c_binomeway%20logo%20white.png"
+                  alt="Binomeway Logo"
+                  className="bject-cover max-w-[80vw] md:max-w-lg"
+                />
+                <p className="text-center">
+                  <Link
+                    href="https://www.binomeway.com/"
+                    className="text-accent-400 underline hover:text-accent-500"
+                    target="_blank"
+                  >
+                    Binomeway
+                  </Link>
+                </p>
+              </div>
+            </div>
+            {/* How to make this fit in?
+            <p className="mt-10 text-lg">
+              We are very greateful for our sponsors!
+            </p> */}
           </div>
         </motion.div>
 
